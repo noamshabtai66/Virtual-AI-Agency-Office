@@ -1,0 +1,7 @@
+{
+  "name": "Virtual AI Agency Office",
+  "description": "A highly detailed, interactive virtual office where AI agents work at their desks. Interact with Sales, Support, and Analysis agents in a professional environment.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
