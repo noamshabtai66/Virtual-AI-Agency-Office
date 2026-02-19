@@ -1,11 +1,15 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Agent, ChatMessage, OfficeState, Task, Memory, LogEntry, CronJob, Artifact, Goal, Position } from './types';
 import { INITIAL_AGENTS, INITIAL_CRON_JOBS, INITIAL_GOALS, ROOMS } from './constants';
 import Character from './components/Character';
 import Desk from './components/Desk';
 import OfficeLog from './components/OfficeLog';
+import HeaderWidgets from './components/HeaderWidgets';
+import OrgTree from './components/OrgTree';
 import { getGeminiResponse } from './services/geminiService';
+
+const SUPABASE_URL = 'https://ojejyiftczrvzcyioiff.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZWp5aWZ0Y3pydnpjeWlvaWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNDkxODAsImV4cCI6MjA4NjkyNTE4MH0.Vp2fkvEXVNGAk8FvFabEKKAaI87qhIwhLfHS1UbfL5I';
 
 const ROOM_THEMES: Record<string, string> = {
   CEO_OFFICE: 'rgba(234, 179, 8, 0.04)',
@@ -14,25 +18,34 @@ const ROOM_THEMES: Record<string, string> = {
   LOUNGE: 'rgba(34, 197, 94, 0.04)',
 };
 
+// Supabase fetch helper
+const fetchFromSupabase = async (table: string) => {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (e) {
+    console.error(`Error fetching ${table}:`, e);
+  }
+  return [];
+};
+
 const App: React.FC = () => {
   const [state, setState] = useState<OfficeState>({
     agents: INITIAL_AGENTS,
     messages: [],
-    tasks: [
-      { id: 't1', title: 'Global Memory Consolidation', assigneeId: 'sage', status: 'IN_PROGRESS', priority: 'HIGH', dueDate: '2024-12-30', tags: ['Backend', 'Core'] },
-      { id: 't2', title: 'Refactor UI State Machine', assigneeId: 'dev', status: 'WORKING on it', priority: 'MEDIUM', dueDate: '2024-12-28', tags: ['Frontend'] } as any,
-      { id: 't3', title: 'Legal Audit of Prompt Injections', assigneeId: 'opi-ceo', status: 'STUCK', priority: 'HIGH', dueDate: '2024-12-25', tags: ['Security'] }
-    ],
+    tasks: [],
     goals: INITIAL_GOALS,
-    memories: [
-      { id: 'm1', agentId: 'sage', content: 'Manager prefers high-density data visualizations.', importance: 5, timestamp: Date.now() - 5000000 },
-      { id: 'm2', agentId: 'dev', content: 'Tailwind config updated for 2.5K resolution support.', importance: 3, timestamp: Date.now() - 2000000 }
-    ],
+    memories: [],
     logs: [{ id: 'l1', timestamp: Date.now(), level: 'SYSTEM', source: 'KERNEL', message: 'Nexus OS Kernel V5.0 Booted Successfully.' }],
     cronJobs: INITIAL_CRON_JOBS,
-    artifacts: [
-      { id: 'a1', title: 'Strategic_Roadmap_Q1.pdf', type: 'DOCUMENT', creatorId: 'opi-ceo', timestamp: Date.now() - 86400000, content: 'Focus on scaling agent autonomy and multi-agent coordination.' }
-    ],
+    artifacts: [],
     internalMessages: [],
     selectedAgentId: null,
     activeTab: 'Dashboard',
@@ -42,6 +55,51 @@ const App: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isTyping, setIsTyping] = useState(false);
   const [inputText, setInputText] = useState('');
+
+  // Load data from Supabase on mount
+  useEffect(() => {
+    const loadData = async () => {
+      const [agentsData, tasksData, logsData, goalsData, decisionsData, notesData] = await Promise.all([
+        fetchFromSupabase('agents'),
+        fetchFromSupabase('tasks'),
+        fetchFromSupabase('activity_log'),
+        fetchFromSupabase('goals'),
+        fetchFromSupabase('decisions'),
+        fetchFromSupabase('notes')
+      ]);
+
+      // Add currentPosition = homePosition for each agent, fallback to INITIAL_AGENTS
+      const agentsWithPosition = agentsData.length > 0 
+        ? agentsData.map((a: any) => ({
+            ...a,
+            homePosition: a.home_position || { x: 50, y: 50 },
+            currentPosition: a.home_position || { x: 50, y: 50 }
+          }))
+        : INITIAL_AGENTS;
+
+      setState(prev => ({
+        ...prev,
+        agents: agentsWithPosition,
+        tasks: tasksData || prev.tasks,
+        logs: logsData.length > 0 ? logsData.map((l: any) => ({
+          id: String(l.id),
+          timestamp: new Date(l.created_at).getTime(),
+          level: l.level,
+          source: l.source,
+          message: l.message
+        })) : prev.logs,
+        goals: goalsData.length > 0 ? goalsData : prev.goals,
+        decisions: decisionsData || prev.decisions || [],
+        memories: notesData || prev.memories || []
+      }));
+    };
+
+    loadData();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     setMousePos({
@@ -95,13 +153,13 @@ const App: React.FC = () => {
     <div className="h-screen w-screen flex bg-[#030305] text-zinc-400 overflow-hidden font-sans rtl selection:bg-blue-500/20" onMouseMove={handleMouseMove}>
       
       {/* GLOBAL NAVIGATION SIDEBAR */}
-      <aside className="w-80 glass border-l border-white/5 flex flex-col z-50 shadow-[25px_0_60px_rgba(0,0,0,0.8)]">
-        <div className="p-12 flex flex-col gap-1">
-           <div className="text-white text-4xl font-black tracking-tighter">NEXUS<span className="text-blue-500">.</span></div>
-           <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.5em] opacity-40">Command Center</div>
+      <aside className="w-20 md:w-80 glass border-l border-white/5 flex flex-col z-50 shadow-[25px_0_60px_rgba(0,0,0,0.8)]">
+        <div className="p-4 md:p-12 flex flex-col gap-1">
+           <div className="text-white text-2xl md:text-4xl font-black tracking-tighter">NEXUS<span className="text-blue-500">.</span></div>
+           <div className="text-[8px] md:text-[10px] text-zinc-600 font-bold uppercase tracking-[0.5em] opacity-40 hidden md:block">Command Center</div>
         </div>
 
-        <nav className="flex-1 px-8 space-y-1 overflow-y-auto custom-scrollbar">
+        <nav className="flex-1 px-2 md:px-8 space-y-1 overflow-y-auto custom-scrollbar">
            {[
              { id: 'Dashboard', label: 'לוח בקרה' },
              { id: 'Physical', label: 'משרד ויזואלי' },
@@ -109,34 +167,37 @@ const App: React.FC = () => {
              { id: 'OrgTree', label: 'עץ ארגוני' },
              { id: 'Artifacts', label: 'ארכיון תוצרים' },
              { id: 'Memory', label: 'זיכרון ליבה' },
-             { id: 'Cron', label: 'אוטומציות (Cron)' },
-             { id: 'Logs', label: 'לוגים חיים' }
+             { id: 'Cron', label: 'אוטומציות' },
+             { id: 'Logs', label: 'לוגים חיים' },
+             { id: 'Brain', label: 'מוח שני' }
            ].map(tab => (
              <button
                key={tab.id}
                onClick={() => setState(s => ({ ...s, activeTab: tab.id as any }))}
-               className={`w-full text-right px-6 py-4 text-[11px] font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 group
+               className={`w-full text-right px-2 md:px-6 py-2 md:py-4 text-[9px] md:text-[11px] font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 group
                  ${state.activeTab === tab.id 
                    ? 'bg-blue-600 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)]' 
-                   : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/5'}`}
+                   : 'text-zinc-600 hover:text-zinc-300 hover:bg-white/5'}
+               `}
              >
                 <div className="flex items-center justify-between">
-                   <span>{tab.label}</span>
+                   <span className="hidden md:inline">{tab.label}</span>
+                   <span className="md:hidden">{tab.label.charAt(0)}</span>
                    {state.activeTab === tab.id && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_#fff]"></div>}
                 </div>
              </button>
            ))}
         </nav>
 
-        <div className="p-10 bg-black/40 border-t border-white/5">
-           <div className="flex justify-between items-center mb-4">
-              <div className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest">Global Status</div>
+        <div className="p-4 md:p-10 bg-black/40 border-t border-white/5">
+           <div className="flex justify-between items-center mb-2 md:mb-4">
+              <div className="text-[8px] md:text-[10px] font-bold text-zinc-700 uppercase tracking-widest hidden md:block">Global Status</div>
               <div className="flex gap-1">
                  <div className="w-1 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                 <div className="w-1 h-3 bg-green-500/40 rounded-full"></div>
+                 <div className="w-1 h-3 bg-green-500/40 rounded-full hidden md:block"></div>
               </div>
            </div>
-           <div className="text-[9px] font-mono text-zinc-500 opacity-50 space-y-1">
+           <div className="text-[8px] md:text-[9px] font-mono text-zinc-500 opacity-50 space-y-1 hidden md:block">
               <div>Uptime: 99.998%</div>
               <div>Active Agents: {state.agents.length}</div>
            </div>
@@ -147,24 +208,29 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col relative overflow-hidden">
         
         {/* HEADER */}
-        <header className="h-32 px-16 flex items-center justify-between z-40 relative border-b border-white/5">
+        <header className="h-20 md:h-32 px-4 md:px-16 flex items-center justify-between z-40 relative border-b border-white/5">
            <div className="flex flex-col">
-              <h1 className="text-white text-4xl font-light tracking-tight">{state.activeTab}</h1>
-              <div className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mt-1">Strategic Control Layer Activated</div>
+              <h1 className="text-white text-2xl md:text-4xl font-light tracking-tight">{state.activeTab}</h1>
+              <div className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] mt-1">Strategic Control Layer Activated</div>
+           </div>
+
+           {/* HEADER WIDGETS - Clock, Weather, Agent Count */}
+           <div className="hidden md:flex">
+             <HeaderWidgets agentCount={state.agents.length} />
            </div>
 
            {/* VOICE COMMAND HUB */}
-           <div className="flex items-center gap-8">
-              <div className="flex flex-col items-end">
+           <div className="flex items-center gap-2 md:gap-8">
+              <div className="hidden md:flex flex-col items-end">
                  <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Global Search</span>
                  <span className="text-white/40 text-xs font-mono">⌘K for anything</span>
               </div>
               <button 
                 onClick={handleVoiceCommand}
-                className={`h-16 px-8 rounded-2xl border transition-all duration-500 flex items-center gap-4
+                className={`h-10 md:h-16 px-4 md:px-8 rounded-2xl border transition-all duration-500 flex items-center gap-2 md:gap-4
                   ${isRecording ? 'bg-red-500/20 border-red-500/50 shadow-2xl' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
-                <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`}></div>
-                <span className="text-[10px] font-bold text-white uppercase tracking-widest">
+                <div className={`w-2 md:w-3 h-2 md:h-3 rounded-full ${isRecording ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`}></div>
+                <span className="text-[8px] md:text-[10px] font-bold text-white uppercase tracking-widest hidden md:inline">
                   {isRecording ? 'Recording Session...' : 'OpenClaw Voice'}
                 </span>
               </button>
@@ -172,7 +238,7 @@ const App: React.FC = () => {
         </header>
 
         {/* DYNAMIC TAB CONTENT */}
-        <section className="flex-1 p-16 overflow-y-auto custom-scrollbar relative z-10">
+        <section className="flex-1 p-4 md:p-16 overflow-y-auto custom-scrollbar relative z-10">
            
            {/* 1. DASHBOARD */}
            {state.activeTab === 'Dashboard' && (
@@ -181,9 +247,9 @@ const App: React.FC = () => {
                  <div className="grid grid-cols-4 gap-8">
                     {[
                       { label: 'Agent Uptime', val: '99.9%', color: 'text-green-500' },
-                      { label: 'Task Efficiency', val: '84%', color: 'text-blue-500' },
+                      { label: 'Task Efficiency', val: `${Math.round((state.tasks.filter((t: any) => t.status === 'done').length / Math.max(state.tasks.length, 1)) * 100)}%`, color: 'text-blue-500' },
                       { label: 'System Memory', val: '2.4TB', color: 'text-purple-500' },
-                      { label: 'Active Sessions', val: '142', color: 'text-white' }
+                      { label: 'Active Sessions', val: `${state.agents.length}`, color: 'text-white' }
                     ].map(card => (
                       <div key={card.label} className="glass p-8 rounded-[2.5rem] border border-white/5 hover:border-white/10 transition-all">
                          <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-4">{card.label}</div>
@@ -197,7 +263,7 @@ const App: React.FC = () => {
                     <div className="col-span-2 glass rounded-[3rem] p-12 border border-white/10 space-y-10">
                        <h2 className="text-white text-2xl font-bold">Company Goals (North Star)</h2>
                        <div className="space-y-8">
-                          {state.goals.map(goal => (
+                          {state.goals.slice(0, 3).map((goal: any) => (
                             <div key={goal.id} className="space-y-3">
                                <div className="flex justify-between items-end">
                                   <span className="text-white font-bold">{goal.title}</span>
@@ -210,15 +276,22 @@ const App: React.FC = () => {
                           ))}
                        </div>
                     </div>
-                    <div className="glass rounded-[3rem] p-12 border border-white/10 flex flex-col gap-6">
-                       <h2 className="text-white text-xl font-bold">The Pulse</h2>
-                       <div className="space-y-4">
-                          {state.logs.slice(0, 5).map(log => (
-                            <div key={log.id} className="flex gap-4 border-r border-white/5 pr-4">
-                               <div className={`w-1 h-auto rounded-full ${log.level === 'SYSTEM' ? 'bg-blue-500' : 'bg-zinc-800'}`}></div>
-                               <div className="flex-1">
-                                  <div className="text-[10px] font-bold text-zinc-600">{new Date(log.timestamp).toLocaleTimeString()}</div>
-                                  <div className="text-xs text-white/70 line-clamp-2">{log.message}</div>
+                    
+                    {/* System Pulse */}
+                    <div className="glass rounded-2xl md:rounded-[3rem] p-6 md:p-12 border border-white/10">
+                       <h2 className="text-white text-lg md:text-xl font-bold mb-4 md:mb-6">System Pulse</h2>
+                       <div className="space-y-3 md:space-y-4">
+                          {[
+                             { label: 'API', status: 'online' },
+                             { label: 'Database', status: 'online' },
+                             { label: 'Agents', status: 'active' },
+                             { label: 'Cron Jobs', status: 'running' }
+                          ].map(item => (
+                            <div key={item.label} className="flex justify-between items-center">
+                               <span className="text-zinc-500 text-xs md:text-sm">{item.label}</span>
+                               <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                  <span className="text-green-500 text-xs">{item.status}</span>
                                </div>
                             </div>
                           ))}
@@ -228,53 +301,42 @@ const App: React.FC = () => {
               </div>
            )}
 
-           {/* 2. TASK BOARD (Monday Style) */}
+           {/* 2. TASKS */}
            {state.activeTab === 'Tasks' && (
-              <div className="max-w-7xl mx-auto animate-in fade-in zoom-in-95 duration-500">
-                 <div className="flex justify-between items-center mb-10">
-                    <h2 className="text-white text-3xl font-bold">Master Task Board</h2>
-                    <button className="px-8 py-3 bg-blue-600 rounded-xl text-[11px] font-bold text-white uppercase tracking-widest hover:bg-blue-500 transition-all">+ New Item</button>
-                 </div>
-                 <div className="glass rounded-[2rem] border border-white/10 overflow-hidden shadow-2xl">
-                    <table className="w-full text-right border-collapse">
-                       <thead className="bg-white/5 text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                          <tr>
-                             <th className="p-6">Item Name</th>
-                             <th className="p-6">Assignee</th>
-                             <th className="p-6">Status</th>
-                             <th className="p-6">Priority</th>
-                             <th className="p-6">Due Date</th>
-                             <th className="p-6">Tags</th>
+              <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <h2 className="text-white text-2xl md:text-3xl font-bold mb-8">ניהול משימות</h2>
+                 <div className="overflow-x-auto">
+                    <table className="w-full">
+                       <thead>
+                          <tr className="text-zinc-600 text-xs uppercase tracking-widest border-b border-white/10">
+                             <th className="text-right pb-4 pr-4">משימה</th>
+                             <th className="text-right pb-4 pr-4">סטטוס</th>
+                             <th className="text-right pb-4 pr-4">אחראי</th>
+                             <th className="text-right pb-4">עדיפות</th>
                           </tr>
                        </thead>
-                       <tbody className="text-sm divide-y divide-white/5">
-                          {state.tasks.map(task => (
-                            <tr key={task.id} className="hover:bg-white/[0.02] transition-colors group">
-                               <td className="p-6 text-white font-medium">{task.title}</td>
-                               <td className="p-6">
-                                  <div className="flex items-center gap-3">
-                                     <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10">
-                                        <img src={state.agents.find(a => a.id === task.assigneeId)?.avatar} className="w-full h-full" />
-                                     </div>
-                                     <span className="text-zinc-400">{state.agents.find(a => a.id === task.assigneeId)?.name}</span>
-                                  </div>
-                               </td>
-                               <td className="p-6">
-                                  <span className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest
-                                    ${task.status === 'DONE' ? 'bg-green-500/10 text-green-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                     {task.status}
+                       <tbody>
+                          {state.tasks.map((task: any) => (
+                            <tr key={task.id} className="border-b border-white/5 hover:bg-white/5">
+                               <td className="py-4 pr-4 text-white font-medium">{task.title}</td>
+                               <td className="py-4 pr-4">
+                                  <span className={`px-3 py-1 rounded-full text-xs ${
+                                    task.status === 'done' ? 'bg-green-500/20 text-green-400' :
+                                    task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                                    'bg-zinc-500/20 text-zinc-400'
+                                  }`}>
+                                    {task.status}
                                   </span>
                                </td>
-                               <td className="p-6">
-                                  <span className={`text-[9px] font-bold uppercase ${task.priority === 'HIGH' ? 'text-red-500' : 'text-zinc-600'}`}>
-                                     {task.priority}
+                               <td className="py-4 pr-4 text-zinc-400">{task.owner || '-'}</td>
+                               <td className="py-4">
+                                  <span className={`text-xs ${
+                                    task.priority === 'high' ? 'text-red-400' :
+                                    task.priority === 'medium' ? 'text-yellow-400' :
+                                    'text-zinc-500'
+                                  }`}>
+                                    {task.priority}
                                   </span>
-                               </td>
-                               <td className="p-6 text-zinc-500 font-mono text-[11px]">{task.dueDate}</td>
-                               <td className="p-6">
-                                  <div className="flex gap-2">
-                                     {task.tags?.map(t => <span key={t} className="text-[8px] bg-white/5 px-2 py-1 rounded text-zinc-400 uppercase">{t}</span>)}
-                                  </div>
                                </td>
                             </tr>
                           ))}
@@ -286,46 +348,16 @@ const App: React.FC = () => {
 
            {/* 3. ORG TREE */}
            {state.activeTab === 'OrgTree' && (
-              <div className="max-w-6xl mx-auto h-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-1000">
-                 <h2 className="text-white text-3xl font-bold mb-20">Neural Organization Hierarchy</h2>
-                 
-                 {/* OPI - CEO */}
-                 <div className="flex flex-col items-center gap-20">
-                    <div className="flex flex-col items-center gap-4">
-                       <div className="w-24 h-24 rounded-3xl glass border-2 border-blue-500/40 p-1 shadow-[0_0_50px_rgba(59,130,246,0.2)]">
-                          <img src={state.agents.find(a => a.id === 'opi-ceo')?.avatar} className="w-full h-full rounded-2xl" />
-                       </div>
-                       <div className="text-center">
-                          <div className="text-white font-black uppercase tracking-widest">OPI</div>
-                          <div className="text-[9px] text-blue-500 font-bold uppercase">Executive Intelligence</div>
-                       </div>
-                    </div>
-
-                    <div className="flex gap-32 relative">
-                       {/* Connection Lines (Simplified) */}
-                       <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-px h-10 bg-white/10"></div>
-                       <div className="absolute -top-10 left-[20%] right-[20%] h-px bg-white/10"></div>
-
-                       {state.agents.filter(a => a.parentId === 'opi-ceo').map(agent => (
-                         <div key={agent.id} className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl glass border border-white/20 p-1">
-                               <img src={agent.avatar} className="w-full h-full rounded-xl" />
-                            </div>
-                            <div className="text-center">
-                               <div className="text-zinc-300 font-bold text-xs uppercase tracking-widest">{agent.name}</div>
-                               <div className="text-[8px] text-zinc-600 font-bold uppercase">{agent.role}</div>
-                            </div>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
+              <div className="max-w-6xl mx-auto h-full flex flex-col animate-in fade-in slide-in-from-top-4 duration-1000">
+                 <h2 className="text-white text-2xl md:text-3xl font-bold mb-8 md:mb-12">עץ ארגוני - Neural Hierarchy</h2>
+                 <OrgTree agents={state.agents as Agent[]} />
               </div>
            )}
 
-           {/* 4. PHYSICAL OFFICE */}
+           {/* 4. PHYSICAL OFFICE - 3D Virtual */}
            {state.activeTab === 'Physical' && (
              <div className="absolute inset-0 flex items-center justify-center office-grid"
-                style={{ transform: `rotateX(${1 + mousePos.y * 0.05}deg) rotateY(${mousePos.x * 0.05}deg)` }}>
+                style={{ transform: `rotateX(${1 + mousePos.y * 0.03}deg) rotateY(${mousePos.x * 0.03}deg)` }}>
                 <div className="relative w-full h-full max-w-[1400px] perspective-2000">
                    {ROOMS.map(room => (
                      <div key={room.id} 
@@ -340,8 +372,7 @@ const App: React.FC = () => {
                    ))}
                    {state.agents.map(agent => (
                      <div key={agent.id} className="absolute z-20 transition-all duration-1000" 
-                        style={{ left: `${agent.currentPosition.x}%`, top: `${agent.currentPosition.y}%`, transform: 'translate(-50%, -50%)' }}>
-                        {agent.currentPosition.x === agent.homePosition.x && <Desk agent={agent} />}
+                        style={{ left: `${(agent.currentPosition || agent.homePosition)?.x || 50}%`, top: `${(agent.currentPosition || agent.homePosition)?.y || 50}%`, transform: 'translate(-50%, -50%)' }}>
                         <Character 
                           agent={agent} 
                           isSelected={state.selectedAgentId === agent.id}
@@ -352,106 +383,141 @@ const App: React.FC = () => {
              </div>
            )}
 
-           {/* 5. CRON MANAGER */}
+           {/* 5. LOGS */}
+           {state.activeTab === 'Logs' && (
+             <div className="max-w-4xl mx-auto animate-in fade-in">
+                <h2 className="text-white text-2xl md:text-3xl font-bold mb-8">לוגים חיים</h2>
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                   {state.logs.length === 0 ? (
+                     <div className="text-zinc-500 text-center py-12">אין לוגים עדיין</div>
+                   ) : (
+                     state.logs.slice(0, 50).map((log: any) => (
+                       <div key={log.id} className="glass p-4 rounded-xl border border-white/10 flex gap-4">
+                          <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                            log.level === 'ERROR' ? 'bg-red-500' : 
+                            log.level === 'WARN' ? 'bg-yellow-500' : 
+                            'bg-green-500'
+                          }`}></div>
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2 mb-1">
+                                <span className="text-zinc-600 text-xs">{new Date(log.timestamp).toLocaleTimeString('he-IL')}</span>
+                                <span className="text-blue-400 text-xs font-bold">{log.source}</span>
+                             </div>
+                             <div className="text-white text-sm truncate">{log.message}</div>
+                          </div>
+                       </div>
+                     ))
+                   )}
+                </div>
+             </div>
+           )}
+
+           {/* 5B. BRAIN - 2nd Brain */}
+           {state.activeTab === 'Brain' && (
+             <div className="max-w-4xl mx-auto animate-in fade-in">
+                <h2 className="text-white text-2xl md:text-3xl font-bold mb-8">מוח שני - 2nd Brain</h2>
+                <div className="glass p-6 md:p-8 rounded-2xl border border-white/10 mb-6">
+                   <div className="text-zinc-400 text-sm mb-4">📓 יומן יומי</div>
+                   <div className="text-white font-medium">ברוך הבא למוח השני שלך!</div>
+                   <div className="text-zinc-500 text-xs mt-2">כאן נשמרים כל הרעיונות, ההחלטות והתובנות.</div>
+                </div>
+                <div className="space-y-4">
+                   <div className="glass p-4 md:p-6 rounded-xl border border-white/5">
+                      <div className="text-white font-semibold text-sm">💡 רעיונות</div>
+                      {state.memories && state.memories.length > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {state.memories.slice(0, 5).map((m: any, i: number) => (
+                            <div key={i} className="text-zinc-400 text-xs border-l-2 border-blue-500 pl-2">{m.content || m.title || JSON.stringify(m)}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-zinc-500 text-xs mt-1">אין רעיונות עדיין</div>
+                      )}
+                   </div>
+                   <div className="glass p-4 md:p-6 rounded-xl border border-white/5">
+                      <div className="text-white font-semibold text-sm">📝 החלטות</div>
+                      {state.decisions && state.decisions.length > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {state.decisions.slice(0, 5).map((d: any, i: number) => (
+                            <div key={i} className="text-zinc-400 text-xs border-l-2 border-green-500 pl-2">{d.title || d.content || JSON.stringify(d)}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-zinc-500 text-xs mt-1">אין החלטות עדיין</div>
+                      )}
+                   </div>
+                   <div className="glass p-4 md:p-6 rounded-xl border border-white/5">
+                      <div className="text-white font-semibold text-sm">🧠 ידע</div>
+                      {state.memories && state.memories.length > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {state.memories.slice(0, 5).map((m: any, i: number) => (
+                            <div key={i} className="text-zinc-400 text-xs border-l-2 border-purple-500 pl-2">{m.content?.substring(0, 100) || m.category || 'ידע'}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-zinc-500 text-xs mt-1">אין ידע עדיין</div>
+                      )}
+                   </div>
+                </div>
+             </div>
+           )}
+
+           {/* 6. MEMORY */}
+           {state.activeTab === 'Memory' && (
+             <div className="max-w-4xl mx-auto animate-in fade-in">
+                <h2 className="text-white text-3xl font-bold mb-12">זיכרון ליבה</h2>
+                <div className="space-y-6">
+                   {state.memories.length === 0 ? (
+                     <div className="text-zinc-500 text-center py-12">אין זיכרונות עדיין</div>
+                   ) : (
+                     state.memories.map((mem: any) => (
+                       <div key={mem.id} className="glass p-8 rounded-[2rem] border border-white/10">
+                          <div className="text-white font-semibold mb-2">{mem.content}</div>
+                          <div className="text-zinc-600 text-xs">Importance: {mem.importance}</div>
+                       </div>
+                     ))
+                   )}
+                </div>
+             </div>
+           )}
+
+           {/* 7. CRON */}
            {state.activeTab === 'Cron' && (
-              <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
-                 <h2 className="text-white text-3xl font-bold mb-10">Automation Pulse (Cron)</h2>
-                 <div className="grid grid-cols-1 gap-6">
-                    {state.cronJobs.map(job => (
-                      <div key={job.id} className="glass p-10 rounded-[2.5rem] border border-white/5 flex items-center justify-between group hover:border-blue-500/20 transition-all">
-                         <div className="flex gap-8 items-center">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border
-                              ${job.lastRunStatus === 'RUNNING' ? 'bg-blue-600/20 border-blue-500/30' : 'bg-white/5 border-white/10'}`}>
-                               <div className={`w-4 h-4 rounded-full ${job.lastRunStatus === 'RUNNING' ? 'bg-blue-500 animate-ping' : 'bg-green-500 shadow-[0_0_10px_#22c55e]'}`}></div>
-                            </div>
-                            <div>
-                               <h3 className="text-white text-xl font-bold">{job.name}</h3>
-                               <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">{job.description}</p>
-                            </div>
-                         </div>
-                         <div className="flex gap-12 text-right">
-                            <div>
-                               <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Interval</div>
-                               <div className="text-sm text-zinc-300 font-mono">{job.interval}s</div>
-                            </div>
-                            <div>
-                               <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Next Run</div>
-                               <div className="text-sm text-zinc-300 font-mono">{new Date(job.nextRun).toLocaleTimeString()}</div>
-                            </div>
-                            <button className="px-6 py-2 bg-white/5 rounded-xl text-[10px] font-bold text-white uppercase hover:bg-white/10 border border-white/5 transition-all">Manual Run</button>
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-           )}
-
-           {/* FALLBACK TABS */}
-           {['Artifacts', 'Memory', 'Logs'].includes(state.activeTab) && (
-             <div className="flex items-center justify-center h-full opacity-30 italic text-zinc-500">
-                Functional components for {state.activeTab} are live in the background monitor.
+             <div className="max-w-4xl mx-auto animate-in fade-in">
+                <h2 className="text-white text-3xl font-bold mb-12">אוטומציות</h2>
+                <div className="space-y-4">
+                   {state.cronJobs.map((cron: any) => (
+                     <div key={cron.id} className="glass p-6 rounded-2xl border border-white/10 flex justify-between items-center">
+                        <div>
+                           <div className="text-white font-semibold">{cron.name}</div>
+                           <div className="text-zinc-500 text-sm">{cron.schedule}</div>
+                        </div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                     </div>
+                   ))}
+                </div>
              </div>
            )}
 
+           {/* 8. ARTIFACTS */}
+           {state.activeTab === 'Artifacts' && (
+             <div className="max-w-4xl mx-auto animate-in fade-in">
+                <h2 className="text-white text-3xl font-bold mb-12">ארכיון תוצרים</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   {state.artifacts.length === 0 ? (
+                     <div className="text-zinc-500 text-center py-12 col-span-2">אין תוצרים עדיין</div>
+                   ) : (
+                     state.artifacts.map((art: any) => (
+                       <div key={art.id} className="glass p-6 rounded-2xl border border-white/10">
+                          <div className="text-white font-semibold">{art.title}</div>
+                          <div className="text-zinc-500 text-sm mt-2">{art.type}</div>
+                       </div>
+                     ))
+                   )}
+                </div>
+             </div>
+           )}
         </section>
-
-        {/* AGENT INTERACTION OVERLAY (CRM PEAK) */}
-        <div className={`absolute bottom-0 inset-x-0 z-[100] transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)
-          ${state.selectedAgentId ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
-          <div className="glass h-[550px] m-10 rounded-[4rem] border border-white/20 shadow-[0_50px_100px_rgba(0,0,0,0.9)] flex overflow-hidden">
-             
-             {/* LEFT: AGENT CRM INFO */}
-             <div className="w-[400px] border-l border-white/10 p-16 bg-black/40 flex flex-col items-center text-center">
-                {state.selectedAgentId && (() => {
-                  const a = state.agents.find(x => x.id === state.selectedAgentId)!;
-                  return (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-right-10 duration-700">
-                       <div className="relative">
-                          <div className="w-32 h-32 rounded-[2.5rem] border-2 border-white/20 p-2 shadow-2xl mx-auto">
-                             <img src={a.avatar} className="w-full h-full rounded-2xl" />
-                          </div>
-                          <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-black flex items-center justify-center text-[10px] font-black text-black">
-                             99
-                          </div>
-                       </div>
-                       <div>
-                          <h3 className="text-white text-3xl font-bold tracking-tight uppercase">{a.name}</h3>
-                          <div className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mt-2">{a.role}</div>
-                       </div>
-                       <p className="text-sm text-zinc-500 leading-relaxed italic">"{a.description}"</p>
-                       <div className="flex flex-wrap justify-center gap-2">
-                          {a.expertise.map(exp => <span key={exp} className="text-[8px] border border-white/10 px-3 py-1.5 rounded-full text-zinc-400 uppercase tracking-widest">{exp}</span>)}
-                       </div>
-                       <button onClick={() => setState(s => ({ ...s, selectedAgentId: null }))}
-                         className="w-full py-5 rounded-2xl bg-white/5 text-[10px] font-bold text-zinc-500 uppercase tracking-[0.3em] hover:bg-white/10 transition-all border border-white/5 active:scale-95">
-                         Close Interface
-                       </button>
-                    </div>
-                  );
-                })()}
-             </div>
-
-             {/* RIGHT: CHAT LOG & INPUT */}
-             <div className="flex-1 p-16 flex flex-col bg-gradient-to-br from-[#0a0a0c] to-black">
-                <div className="flex-1 overflow-hidden relative">
-                   <OfficeLog messages={state.messages.filter(m => m.senderId === 'user' || m.senderId === state.selectedAgentId)} />
-                   <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#0a0a0c] to-transparent pointer-events-none"></div>
-                </div>
-                <div className="pt-10 flex gap-6">
-                   <input 
-                     type="text" value={inputText} 
-                     onChange={e => setInputText(e.target.value)} 
-                     onKeyDown={e => e.key === 'Enter' && handleSendMessage(inputText, state.selectedAgentId!)}
-                     placeholder={`Command ${state.agents.find(a => a.id === state.selectedAgentId)?.name}...`}
-                     className="flex-1 bg-black/60 border border-white/10 rounded-[1.5rem] px-10 py-5 text-sm text-white focus:border-blue-500/50 outline-none transition-all" />
-                   <button onClick={() => handleSendMessage(inputText, state.selectedAgentId!)} disabled={isTyping}
-                     className="bg-blue-600 hover:bg-blue-500 px-12 rounded-[1.5rem] text-[11px] font-bold text-white uppercase tracking-widest shadow-2xl transition-all active:scale-95">
-                     {isTyping ? 'Syncing...' : 'Transmit'}
-                   </button>
-                </div>
-             </div>
-          </div>
-        </div>
       </main>
     </div>
   );
