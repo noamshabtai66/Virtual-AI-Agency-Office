@@ -59,7 +59,6 @@ const App: React.FC = () => {
     goals: [],
     memories: [],
     logs: [],
-    cronJobs: [],
     artifacts: [],
     internalMessages: [],
     proposals: [],
@@ -217,7 +216,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, dailyCost, logs, research, securityIssues, artifacts, proposals, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, dailyCost, logs, research, securityIssues, artifacts, cronJobs, proposals, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
@@ -228,6 +227,7 @@ const App: React.FC = () => {
           fetchSecurityIssues(),
           fetchArtifacts(),
           fetchProposals(),
+          fetchCronJobs(),
           fetchCapabilities(),
           fetchModels(),
           fetchSystemHealth(),
@@ -243,10 +243,10 @@ const App: React.FC = () => {
           research: research,
           securityIssues: securityIssues,
           artifacts: artifacts,
+          cronJobs: cronJobs,
           proposals: proposals,
           dailyCost: dailyCost || { total: "$0.00", breakdown: [] },
           systemHealth: systemHealth || { status: "UNKNOWN", uptime: "0", responseTime: "0", errorRate: "0", activeTasks: 0 },
-          cronJobs: [],
         }));
 
         // Set additional state for non-task data
