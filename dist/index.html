@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS OS | Virtual Enterprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --aura-color: rgba(59, 130, 246, 0.1);
+            --floor-color: #0c0c0e;
+        }
+        body {
+            font-family: 'Assistant', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--floor-color);
+            color: #d1d1d6;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px) saturate(160%);
+            -webkit-backdrop-filter: blur(30px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .aura-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: radial-gradient(circle at 50% 50%, var(--aura-color) 0%, transparent 80%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Office Environment Enhancements */
+        .office-grid {
+            background-image: 
+              linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 120px 120px;
+        }
+
+        .light-ray {
+            position: absolute;
+            width: 300px;
+            height: 1000px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.05) 0%, transparent 100%);
+            transform: rotate(45deg);
+            pointer-events: none;
+            filter: blur(60px);
+            top: -200px;
+        }
+
+        .reflection-floor {
+            background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        /* Living Office Effects */
+        .dust-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .dust {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.2;
+            filter: blur(1px);
+            animation: float-dust var(--d) linear infinite;
+        }
+        @keyframes float-dust {
+            0% { transform: translate(0, 0) opacity(0); }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translate(var(--x), var(--y)) opacity(0); }
+        }
+
+        .screen-glow {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.4);
+            filter: blur(20px);
+            border-radius: 50%;
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+
+        .data-stream {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4px;
+            color: rgba(59, 130, 246, 0.5);
+            white-space: nowrap;
+            animation: scroll-data var(--s) linear infinite;
+        }
+        @keyframes scroll-data {
+            from { transform: translateY(0); }
+            to { transform: translateY(-100%); }
+        }
+
+        .glass-partition {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(4px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .character-shadow {
+            position: absolute;
+            width: 40px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 50%;
+            filter: blur(5px);
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+        }
+
+        .room-floor {
+            background: #1a1a1e;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        /* Ambient Occlusion & Glossy Reflection on Floor */
+        .room-floor::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.9);
+            pointer-events: none;
+        }
+        .room-floor::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 40%, rgba(255,255,255,0.02) 100%);
+            pointer-events: none;
+        }
+
+        /* Hyper-Realistic Effects */
+        .film-grain {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        @keyframes breathe {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.03) translateY(-1%); }
+        }
+        .animate-breathe {
+            animation: breathe 4s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+
+        /* 3D Wall System */
+        .wall {
+            position: absolute;
+            background: linear-gradient(to bottom, #2a2a2e, #1a1a1e);
+            border: 1px solid rgba(255,255,255,0.05);
+            transform-style: preserve-3d;
+        }
+        .wall-back {
+            transform: rotateX(-90deg);
+            transform-origin: top;
+            width: 100%;
+            height: 160px;
+            top: 0;
+            left: 0;
+        }
+        .wall-left {
+            transform: rotateY(90deg);
+            transform-origin: left;
+            width: 160px;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .wall-right {
+            transform: rotateY(-90deg);
+            transform-origin: right;
+            width: 160px;
+            height: 100%;
+            top: 0;
+            right: 0;
+        }
+
+        /* Textures */
+        .texture-carpet {
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+        .texture-wood {
+            background: #2c1e16;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.1) 40px, rgba(0,0,0,0.1) 80px);
+        }
+        .texture-tile {
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Props */
+        .prop-shadow {
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+        }
+
+        .window-view {
+            position: absolute;
+            background: linear-gradient(to bottom, #1e3a8a, #1e1b4b);
+            overflow: hidden;
+        }
+        .city-lights {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 2px 2px, #fbbf24 1px, transparent 0);
+            background-size: 12px 12px;
+            opacity: 0.3;
+        }
+
+        .ceiling-light {
+            position: absolute;
+            width: 80px;
+            height: 10px;
+            background: #fff;
+            box-shadow: 0 0 30px #fff, 0 0 60px rgba(255,255,255,0.2);
+            border-radius: 2px;
+            top: 20px;
+        }
+
+        .office-carpet {
+            background-color: #050507;
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.01) 1px, transparent 0);
+            background-size: 32px 32px;
+        }
+
+        .room-floor:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.01) translateY(-2px);
+        }
+
+        @keyframes god-rays {
+            0%, 100% { opacity: 0.3; transform: rotate(45deg) translateX(0); }
+            50% { opacity: 0.5; transform: rotate(45deg) translateX(20px); }
+        }
+        .animate-god-rays { animation: god-rays 12s ease-in-out infinite; }
+        
+        /* Character Animations */
+        @keyframes walk-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-walk-bob { animation: walk-bob 0.6s ease-in-out infinite; }
+
+        @keyframes leg-l {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            50% { transform: rotate(20deg) translateY(-2px); }
+        }
+        .animate-leg-l { animation: leg-l 0.6s ease-in-out infinite; }
+
+        @keyframes leg-r {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            50% { transform: rotate(-20deg) translateY(-2px); }
+        }
+        .animate-leg-r { animation: leg-r 0.6s ease-in-out infinite; }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        .animate-bounce-slow { animation: bounce-slow 3s ease-in-out infinite; }
+
+        @keyframes type-left {
+            0%, 100% { transform: translateX(0) scaleY(1); }
+            50% { transform: translateX(-2px) scaleY(0.9); }
+        }
+        .animate-type-left { animation: type-left 0.2s ease-in-out infinite; }
+
+        @keyframes type-right {
+            0%, 100% { transform: translateX(0) scaleY(1); }
+            50% { transform: translateX(2px) scaleY(0.9); }
+        }
+        .animate-type-right { animation: type-right 0.2s ease-in-out infinite; }
+
+        .walking-lean-left { transform: rotate(-5deg); }
+        .walking-lean-right { transform: rotate(5deg); }
+
+        .perspective-view {
+            perspective: 2500px;
+            transform-style: preserve-3d;
+        }
+
+        /* Skeuomorphic Terminal Look */
+        .terminal-text {
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Voice Wave Animation */
+        @keyframes wave {
+            0% { transform: scaleY(0.2); }
+            50% { transform: scaleY(1); }
+            100% { transform: scaleY(0.2); }
+        }
+        .wave-bar {
+            width: 3px;
+            height: 100%;
+            background: #fff;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+    </style>
+
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-Cq6xJ4RU.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-B5SYdJRJ.css">
+</head>
+<body>
+    <div class="aura-bg" id="aura"></div>
+    <div id="root"></div>
+</body>
+</html>
