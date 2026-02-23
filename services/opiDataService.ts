@@ -326,3 +326,74 @@ export function subscribeToAgents(callback: (payload: any) => void) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'agents' }, callback)
     .subscribe();
 }
+
+// Additional fetch functions for full organization management
+
+export async function fetchProposals(): Promise<OfficeProposal[]> {
+  try {
+    const { data, error } = await supabase.from('decisions').select('*').order('created_at', { ascending: false }).limit(20);
+    if (error) {
+      console.error('Error fetching proposals:', error);
+      return [];
+    }
+    return (data || []).map(d => ({
+      id: String(d.id),
+      title: d.title,
+      proposer: d.created_by || 'OPI',
+      date: d.created_at ? new Date(d.created_at).toLocaleDateString('he-IL') : ' recently',
+      description: d.description || '',
+      impact: 'Medium',
+      effort: 'Medium',
+      agents: [],
+      status: d.status === 'approved' ? 'approved' : d.status === 'rejected' ? 'rejected' : 'pending',
+    }));
+  } catch (e) {
+    console.error('Exception fetching proposals:', e);
+    return [];
+  }
+}
+
+export async function fetchResearch(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase.from('notes').select('*').order('created_at', { ascending: false }).limit(20);
+    if (error) {
+      console.error('Error fetching research:', error);
+      return [];
+    }
+    return (data || []).map(n => ({
+      id: String(n.id),
+      title: n.title || 'Untitled',
+      summary: n.content?.slice(0, 200) || '',
+      agentId: '1',
+      timestamp: new Date(n.created_at).getTime(),
+      sources: [],
+      category: 'Internal',
+      importance: 3,
+      tags: n.tags || [],
+    }));
+  } catch (e) {
+    console.error('Exception fetching research:', e);
+    return [];
+  }
+}
+
+export async function fetchCronJobs(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase.from('cron_executions').select('*').order('started_at', { ascending: false }).limit(10);
+    if (error) {
+      console.error('Error fetching cron jobs:', error);
+      return [];
+    }
+    return (data || []).map(c => ({
+      id: String(c.id),
+      name: c.job_name || 'unknown',
+      interval: 86400,
+      nextRun: new Date(c.started_at).getTime() + 86400000,
+      lastRunStatus: c.status === 'success' ? 'SUCCESS' : c.status === 'partial' ? 'FAILED' : 'RUNNING',
+      description: c.logs || '',
+    }));
+  } catch (e) {
+    console.error('Exception fetching cron jobs:', e);
+    return [];
+  }
+}
