@@ -537,3 +537,38 @@ export async function fetchDailyCost(): Promise<{ total: string; breakdown: { mo
     return { total: '$0.00', breakdown: [] };
   }
 }
+
+export async function fetchCronJobs() {
+  try {
+    const { data, error } = await supabase
+      .from('cron_executions')
+      .select('*')
+      .order('execution_time', { ascending: false })
+      .limit(20);
+    
+    if (error) throw error;
+    
+    return (data || []).map(job => ({
+      id: String(job.id),
+      name: job.job_name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      description: `Automated ${job.job_name} task`,
+      schedule: 'Daily',
+      lastRun: job.execution_time,
+      lastRunStatus: job.status?.toUpperCase() || 'UNKNOWN',
+      nextRun: calculateNextRun(job.job_name),
+      successRate: job.status === 'success' ? 100 : 0,
+      avgDuration: '2m',
+      status: job.status === 'active' ? 'ACTIVE' : 'PAUSED'
+    }));
+  } catch (e) {
+    console.error('Error fetching cron jobs:', e);
+    return [];
+  }
+}
+
+function calculateNextRun(jobName: string): string {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(next.getHours() + 1);
+  return next.toISOString();
+}
