@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchProposals, fetchResearch, fetchCronJobs, fetchSecurityIssues, fetchArtifacts, fetchCapabilities, fetchModels, fetchSystemHealth, createOfficeTask, subscribeToTasks } from './services/opiDataService';
+import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
   LayoutDashboard, 
@@ -215,12 +215,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, securityIssues, artifacts, cronJobs, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, cronJobs, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
           fetchOfficeMemories(),
           fetchOfficeLogs(),
+          fetchAllResearch(),
           fetchSecurityIssues(),
           fetchArtifacts(),
           fetchCronJobs(),
@@ -236,6 +237,7 @@ const App: React.FC = () => {
           goals: goals.length > 0 ? goals : prev.goals,
           memories: memories.length > 0 ? memories : prev.memories,
           logs: logs.length > 0 ? logs : prev.logs,
+          research: research,
           securityIssues: securityIssues,
           artifacts: artifacts,
           cronJobs: cronJobs,
