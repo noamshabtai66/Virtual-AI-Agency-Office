@@ -51,13 +51,14 @@ const getWallTopPath = (x: number, y: number, height: number) => {
 
 
 export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialAgents, selectedAgentId, onSelectAgent }) => {
-  const [zoom, setZoom] = useState(0.35);
+  const [zoom, setZoom] = useState(0.12);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [viewBox, setViewBox] = useState({ x: -2500, y: -2000, w: 5000, h: 4000 });
+  const [viewBox, setViewBox] = useState({ x: -1200, y: -900, w: 2400, h: 1800 });
   const [localAgents, setLocalAgents] = useState(initialAgents || []);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [activeMenuAgentId, setActiveMenuAgentId] = useState<string | null>(null);
   const [focusedRoomId, setFocusedRoomId] = useState<string | null>(null);
+  const [showRoomSelector, setShowRoomSelector] = useState(false);
 
   const handleRoomFocus = (roomId: string | null) => {
     setFocusedRoomId(roomId);
@@ -695,7 +696,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
 
   return (
     <div 
-      className="w-full h-full bg-[#050505] overflow-hidden relative cursor-move select-none"
+      className="w-full h-[85vh] md:h-full bg-[#050505] overflow-hidden relative cursor-move select-none"
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -729,7 +730,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
           </div>
         </div>
       </div>
-      <div className="absolute bottom-4 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-1 md:gap-3 z-50 overflow-x-auto max-w-[95vw] scrollbar-hide bg-zinc-900/40 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-8 duration-700">
+      <div className="absolute bottom-4 md:bottom-12 hidden md:flex left-1/2 -translate-x-1/2 flex gap-1 md:gap-3 z-50 overflow-x-auto max-w-[95vw] scrollbar-hide bg-zinc-900/40 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-8 duration-700">
          <button 
             onClick={() => handleRoomFocus(null)}
             className={`px-2 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${!focusedRoomId ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
@@ -862,7 +863,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
 
       {/* SVG CANVAS */}
       <svg 
-         className="absolute top-0 left-0 w-full h-full bg-[#050505]"
+         className="absolute top-0 left-0 w-full h-[85vh] md:h-full bg-[#050505]"
          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
          preserveAspectRatio="xMidYMid slice"
          style={{ transition: 'viewBox 1.2s cubic-bezier(0.2, 0, 0.2, 1)' }}
