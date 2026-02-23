@@ -216,13 +216,12 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, dailyCost, logs, research, securityIssues, artifacts, cronJobs, proposals, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, cronJobs, proposals, capabilities, models, systemHealth, dailyCost] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
           fetchOfficeMemories(),
           fetchOfficeLogs(),
-          fetchDailyCost(),
           fetchAllResearch(),
           fetchSecurityIssues(),
           fetchArtifacts(),
@@ -231,6 +230,7 @@ const App: React.FC = () => {
           fetchCapabilities(),
           fetchModels(),
           fetchSystemHealth(),
+          fetchDailyCost(),
         ]);
 
         setState(prev => ({
