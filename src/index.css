@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Original Office Styles - Restored */
+/* Additional custom styles */
 :root {
     --aura-color: rgba(59, 130, 246, 0.1);
     --floor-color: #0c0c0e;
@@ -31,18 +31,7 @@ body {
     pointer-events: none;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
-
-/* Glass effect */
-.glass-panel {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(30px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Film grain effect */
+/* Film grain */
 .film-grain {
     position: fixed;
     top: 0; left: 0; width: 100vw; height: 100vh;
@@ -59,31 +48,6 @@ body {
     pointer-events: none;
 }
 
-/* Room floor effects */
-.room-floor {
-    background: #1a1a1e;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
-
-/* Character animations */
-@keyframes walk-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-
-@keyframes bounce-slow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
-}
-
-/* Terminal text */
-.terminal-text {
-    font-family: 'JetBrains Mono', monospace;
-    text-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
-}
-
-/* RTL Support */
-[dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
-    --tw-space-x-reverse: 1;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
