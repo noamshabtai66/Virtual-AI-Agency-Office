@@ -249,6 +249,7 @@ const App: React.FC = () => {
         console.log("Capabilities:", capabilities.length);
         console.log("Models:", models.length);
         console.log("SystemHealth:", systemHealth.status);
+        console.log("Proposals:", proposals?.length || 0);
 
       } catch (error) {
         console.error('Error fetching initial state from OPI Supabase:', error);
@@ -709,9 +710,9 @@ const App: React.FC = () => {
                        </div>
                        <div className="flex justify-between items-start mb-2">
                           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Pending Approvals</div>
-                          <div className={`w-2 h-2 rounded-full ${(state.proposals || []).filter(p => p.status === 'pending').length > 0 ? 'bg-yellow-500 animate-pulse' : 'bg-zinc-800'}`}></div>
+                          <div className={`w-2 h-2 rounded-full ${(Array.isArray(state.proposals) ? state.proposals : []).filter(p => p.status === 'pending').length > 0 ? 'bg-yellow-500 animate-pulse' : 'bg-zinc-800'}`}></div>
                        </div>
-                       <div className="text-3xl font-black text-white mb-1">{(state.proposals || []).filter(p => p.status === 'pending').length}</div>
+                       <div className="text-3xl font-black text-white mb-1">{(Array.isArray(state.proposals) ? state.proposals : []).filter(p => p.status === 'pending').length}</div>
                        <div className="text-[10px] text-zinc-600">Requires immediate review</div>
                     </button>
 
@@ -1281,13 +1282,13 @@ const App: React.FC = () => {
                      </div>
                      <div className="flex gap-4">
                         <div className="px-4 py-2 bg-yellow-500/10 rounded-lg text-[10px] font-bold text-yellow-500 uppercase border border-yellow-500/20">
-                        {(state.proposals || []).filter(p => p.status === 'pending').length} Pending Approvals
+                        {(Array.isArray(state.proposals) ? state.proposals : []).filter(p => p.status === 'pending').length} Pending Approvals
                      </div>
                      </div>
                   </div>
                   
                   <div className="space-y-6">
-                     {(state.proposals || []).filter(p => p.status === 'pending').map(proposal => (
+                     {(Array.isArray(state.proposals) ? state.proposals : []).filter(p => p.status === 'pending').map(proposal => (
                         <div key={proposal.id} className="glass p-8 rounded-3xl border border-white/5 hover:border-yellow-500/30 transition-all group">
                            <div className="flex justify-between items-start mb-4">
                               <div className="flex items-center gap-3">
