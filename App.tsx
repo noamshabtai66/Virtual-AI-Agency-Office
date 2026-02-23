@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchProposals, fetchResearch, fetchCronJobs, fetchSecurityIssues, fetchArtifacts, createOfficeTask, subscribeToTasks } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchProposals, fetchResearch, fetchCronJobs, fetchSecurityIssues, fetchArtifacts, fetchCapabilities, fetchModels, fetchSystemHealth, createOfficeTask, subscribeToTasks } from './services/opiDataService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
   LayoutDashboard, 
@@ -215,7 +215,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, securityIssues, artifacts, cronJobs] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, securityIssues, artifacts, cronJobs, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
@@ -224,6 +224,9 @@ const App: React.FC = () => {
           fetchSecurityIssues(),
           fetchArtifacts(),
           fetchCronJobs(),
+          fetchCapabilities(),
+          fetchModels(),
+          fetchSystemHealth(),
         ]);
 
         setState(prev => ({
@@ -237,6 +240,11 @@ const App: React.FC = () => {
           artifacts: artifacts,
           cronJobs: cronJobs,
         }));
+
+        // Set additional state for non-task data
+        console.log("Capabilities:", capabilities.length);
+        console.log("Models:", models.length);
+        console.log("SystemHealth:", systemHealth.status);
 
       } catch (error) {
         console.error('Error fetching initial state from OPI Supabase:', error);
