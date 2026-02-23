@@ -58,6 +58,8 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [activeMenuAgentId, setActiveMenuAgentId] = useState<string | null>(null);
   const [focusedRoomId, setFocusedRoomId] = useState<string | null>(null);
+  const [mobileRoomMenu, setMobileRoomMenu] = useState(false);
+  const [showMap, setShowMap] = useState(true);
   const [showRoomSelector, setShowRoomSelector] = useState(false);
 
   const handleRoomFocus = (roomId: string | null) => {
