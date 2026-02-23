@@ -1021,14 +1021,6 @@ const App: React.FC = () => {
              />
            )}
 
-           {/* 4.6 SECURITY CENTER */}
-           {state.activeTab === 'Security' && (
-             <SecurityCenter 
-               issues={state.securityIssues}
-               agents={state.agents}
-             />
-           )}
-
            {/* 5. CRON MANAGER */}
            {state.activeTab === 'Cron' && (
               <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-10 duration-500">
