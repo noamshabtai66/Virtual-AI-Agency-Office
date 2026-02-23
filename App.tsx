@@ -10,6 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, createOfficeTask, subscribeToTasks } from './services/opiDataService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
   LayoutDashboard, 
@@ -222,51 +223,55 @@ const App: React.FC = () => {
     });
   }, []);
 
-  // Fetch initial data from Supabase
+  // Fetch initial data from OPI Supabase
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, cronJobs, artifacts] = await Promise.all([
-          supabase.from('agents').select('*'),
-          supabase.from('tasks').select('*'),
-          supabase.from('goals').select('*'),
-          supabase.from('memories').select('*'),
-          supabase.from('logs').select('*'),
-          supabase.from('cron_jobs').select('*'),
-          supabase.from('artifacts').select('*'),
+        const [agents, tasks, goals] = await Promise.all([
+          fetchOfficeAgents(),
+          fetchOfficeTasks(),
+          fetchOfficeGoals(),
         ]);
 
-        const newState: Partial<OfficeState> = {};
-        if (agents.data) newState.agents = normalizeData(agents.data, 'agent') as Agent[];
-        if (tasks.data) newState.tasks = normalizeData(tasks.data, 'task') as Task[];
-        if (goals.data) newState.goals = goals.data as Goal[];
-        if (memories.data) newState.memories = normalizeData(memories.data, 'memory') as Memory[];
-        if (logs.data) newState.logs = normalizeData(logs.data, 'log') as LogEntry[];
-        if (cronJobs.data) newState.cronJobs = normalizeData(cronJobs.data, 'cron') as CronJob[];
-        if (artifacts.data) newState.artifacts = normalizeData(artifacts.data, 'artifact') as Artifact[];
-
-        setState(prev => ({ ...prev, ...newState }));
+        setState(prev => ({
+          ...prev,
+          agents: agents.length > 0 ? agents : prev.agents,
+          tasks: tasks.length > 0 ? tasks : prev.tasks,
+          goals: goals.length > 0 ? goals : prev.goals,
+        }));
 
       } catch (error) {
-        console.error('Error fetching initial state from Supabase:', error);
+        console.error('Error fetching initial state from OPI Supabase:', error);
       }
     };
 
     fetchInitialState();
-  }, [normalizeData]);
+  }, []);
 
-  // Real-time subscriptions
+  // Real-time subscriptions from OPI
   useEffect(() => {
-    const channel = supabase
-      .channel('realtime-tasks')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
-        (payload) => {
-          console.log('Change received!', payload);
-          setState(prev => {
-            const tasks = [...prev.tasks];
-            if (payload.eventType === 'INSERT') {
+    const channel = subscribeToTasks((payload) => {
+      console.log('Task change received from OPI!', payload);
+      setState(prev => {
+        const tasks = [...prev.tasks];
+        if (payload.eventType === 'INSERT') {
+          return { ...prev, tasks: [...tasks, { id: String(payload.new.id), title: payload.new.title, assigneeId: payload.new.owner || '1', status: 'TODO', priority: (payload.new.priority as any) || 'MEDIUM', dueDate: payload.new.deadline || '' }] };
+        }
+        if (payload.eventType === 'UPDATE') {
+          const index = tasks.findIndex(t => t.id === String(payload.old.id));
+          if (index !== -1) {
+            tasks[index] = { ...tasks[index], status: (payload.new.status as any) || tasks[index].status };
+          }
+          return { ...prev, tasks };
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
               const normalized = normalizeData([payload.new], 'task')[0];
               return { ...prev, tasks: [...tasks, normalized] };
             }
@@ -370,17 +375,20 @@ const App: React.FC = () => {
 
   const addTaskToSupabase = async (task: Omit<Task, 'id'>) => {
     try {
-      const { data, error } = await supabase.from('tasks').insert(task).select().single();
-      if (error) throw error;
+      const success = await createOfficeTask({
+        id: Date.now().toString(),
+        ...task,
+      });
 
-      if (data) {
+      if (success) {
+        const tasks = await fetchOfficeTasks();
         setState(prev => ({ 
           ...prev, 
-          tasks: [...prev.tasks, data as Task],
+          tasks: tasks,
         }));
       }
     } catch (error) {
-      console.error('Error adding task to Supabase:', error);
+      console.error('Error adding task to OPI Supabase:', error);
     }
   };
 
