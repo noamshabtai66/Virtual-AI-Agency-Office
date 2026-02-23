@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, fetchResearch, fetchProposals, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, fetchResearch, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
 import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, capabilities, models, systemHealth, proposals] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
@@ -225,7 +225,7 @@ const App: React.FC = () => {
           fetchAllResearch(),
           fetchSecurityIssues(),
           fetchArtifacts(),
-          
+          fetchProposals(),
           fetchCapabilities(),
           fetchModels(),
           fetchSystemHealth(),
@@ -241,6 +241,7 @@ const App: React.FC = () => {
           research: research,
           securityIssues: securityIssues,
           artifacts: artifacts,
+          proposals: proposals,
           cronJobs: [],
         }));
 
@@ -724,9 +725,9 @@ const App: React.FC = () => {
                        </div>
                        <div className="flex justify-between items-start mb-2">
                           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Blocked Tasks</div>
-                          <div className={`w-2 h-2 rounded-full ${state.tasks.filter(t => t.status === 'STUCK').length > 0 ? 'bg-red-500 animate-pulse' : 'bg-zinc-800'}`}></div>
+                          <div className={`w-2 h-2 rounded-full ${state.tasks.filter(t => t.status === 'open').length > 0 ? 'bg-red-500 animate-pulse' : 'bg-zinc-800'}`}></div>
                        </div>
-                       <div className="text-3xl font-black text-white mb-1">{state.tasks.filter(t => t.status === 'STUCK').length}</div>
+                       <div className="text-3xl font-black text-white mb-1">{state.tasks.filter(t => t.status === 'open').length}</div>
                        <div className="text-[10px] text-zinc-600">High priority bottlenecks</div>
                     </button>
 
