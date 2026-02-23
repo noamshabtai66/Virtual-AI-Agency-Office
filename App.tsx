@@ -10,6 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, fetchResearch, fetchProposals } from './services/opiDataService';
 import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
@@ -215,7 +216,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, cronJobs, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
@@ -224,7 +225,7 @@ const App: React.FC = () => {
           fetchAllResearch(),
           fetchSecurityIssues(),
           fetchArtifacts(),
-          fetchCronJobs(),
+          
           fetchCapabilities(),
           fetchModels(),
           fetchSystemHealth(),
@@ -240,7 +241,7 @@ const App: React.FC = () => {
           research: research,
           securityIssues: securityIssues,
           artifacts: artifacts,
-          cronJobs: cronJobs,
+          cronJobs: [],
         }));
 
         // Set additional state for non-task data
