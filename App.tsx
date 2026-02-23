@@ -249,6 +249,8 @@ const App: React.FC = () => {
         console.log("Capabilities:", capabilities.length);
         console.log("Models:", models.length);
         console.log("SystemHealth:", systemHealth.status);
+        console.log("Proposals count:", proposals?.length || 0);
+        console.log("Proposals sample:", proposals?.[0]);
         console.log("Proposals:", proposals?.length || 0);
 
       } catch (error) {
