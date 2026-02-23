@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchDailyCost, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchDailyCost, fetchOfficeGoals, fetchProposals, fetchCronJobs, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
 import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
