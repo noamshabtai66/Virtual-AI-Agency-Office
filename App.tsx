@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, createOfficeTask, subscribeToTasks } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, fetchProposals, fetchResearch, fetchCronJobs, fetchSecurityIssues, fetchArtifacts, createOfficeTask, subscribeToTasks } from './services/opiDataService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
   LayoutDashboard, 
@@ -215,12 +215,15 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, securityIssues, artifacts, cronJobs] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
           fetchOfficeMemories(),
           fetchOfficeLogs(),
+          fetchSecurityIssues(),
+          fetchArtifacts(),
+          fetchCronJobs(),
         ]);
 
         setState(prev => ({
@@ -230,6 +233,9 @@ const App: React.FC = () => {
           goals: goals.length > 0 ? goals : prev.goals,
           memories: memories.length > 0 ? memories : prev.memories,
           logs: logs.length > 0 ? logs : prev.logs,
+          securityIssues: securityIssues,
+          artifacts: artifacts,
+          cronJobs: cronJobs,
         }));
 
       } catch (error) {

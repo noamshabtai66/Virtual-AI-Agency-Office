@@ -377,23 +377,54 @@ export async function fetchResearch(): Promise<any[]> {
   }
 }
 
-export async function fetchCronJobs(): Promise<any[]> {
+export async function fetchSecurityIssues(): Promise<any[]> {
   try {
-    const { data, error } = await supabase.from('cron_executions').select('*').order('started_at', { ascending: false }).limit(10);
+    // Map from notes with security-related tags or content
+    const { data, error } = await supabase.from('notes').select('*').order('created_at', { ascending: false }).limit(20);
     if (error) {
-      console.error('Error fetching cron jobs:', error);
+      console.error('Error fetching security issues:', error);
       return [];
     }
-    return (data || []).map(c => ({
-      id: String(c.id),
-      name: c.job_name || 'unknown',
-      interval: 86400,
-      nextRun: new Date(c.started_at).getTime() + 86400000,
-      lastRunStatus: c.status === 'success' ? 'SUCCESS' : c.status === 'partial' ? 'FAILED' : 'RUNNING',
-      description: c.logs || '',
+    
+    // Filter for security-related notes or create default structure
+    return (data || []).map(n => {
+      const content = (n.content || '').toLowerCase();
+      const isSecurity = content.includes('security') || content.includes('vulnerability') || content.includes('breach') || content.includes('alert') || n.tags?.some(t => t.toLowerCase().includes('security'));
+      
+      return {
+        id: String(n.id),
+        title: n.title || 'Security Note',
+        description: n.content || '',
+        severity: isSecurity ? 'HIGH' : 'LOW',
+        status: 'CLOSED',
+        createdAt: new Date(n.created_at).getTime(),
+        affectedSystems: n.tags || [],
+      };
+    });
+  } catch (e) {
+    console.error('Exception fetching security issues:', e);
+    return [];
+  }
+}
+
+export async function fetchArtifacts(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase.from('notes').select('*').order('created_at', { ascending: false }).limit(30);
+    if (error) {
+      console.error('Error fetching artifacts:', error);
+      return [];
+    }
+    
+    return (data || []).map(n => ({
+      id: String(n.id),
+      title: n.title || 'Untitled',
+      type: n.category === 'planning' ? 'DOCUMENT' : n.category === 'milestone' ? 'DOCUMENT' : n.category === 'identity' ? 'DOCUMENT' : 'DATA',
+      creatorId: '1',
+      timestamp: new Date(n.created_at).getTime(),
+      content: n.content || '',
     }));
   } catch (e) {
-    console.error('Exception fetching cron jobs:', e);
+    console.error('Exception fetching artifacts:', e);
     return [];
   }
 }
