@@ -17,39 +17,21 @@ export async function fetchAllResearch(): Promise<ResearchItem[]> {
     const { data, error } = await supabase
       .from('notes')
       .select('*')
+      .or('category.like.%research%')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(50);
     
     if (error) throw error;
     
-    // Map notes to research entries
-    return (data || []).map(item => {
-      // Map category to allowed values
-      const categoryMap: Record<string, string> = {
-        'brain': 'Market',
-        'planning': 'Internal', 
-        'research': 'Tech',
-        'memory': 'Internal',
-        'workflow': 'Internal',
-        'pulse': 'Internal',
-        'milestone': 'Internal',
-        'heartbeat': 'Internal',
-        'feedback': 'Internal',
-        'סודות': 'Internal'
-      };
-      
-      return {
-        id: String(item.id),
-        title: item.title,
-        summary: item.content?.slice(0, 200) || '',
-        agentId: '1', // Default agent
-        timestamp: new Date(item.created_at).getTime(),
-        sources: [],
-        category: (categoryMap[item.category || ''] || 'Internal') as 'Market' | 'Tech' | 'Competitor' | 'Internal',
-        importance: 5, // Default importance
-        tags: item.tags || []
-      };
-    });
+    return (data || []).map(item => ({
+      id: String(item.id),
+      title: item.title,
+      content: item.content,
+      category: item.category || 'research',
+      tags: item.tags || [],
+      created_at: item.created_at,
+      summary: item.content?.slice(0, 200) + '...'
+    }));
   } catch (e) {
     console.error('Error fetching research:', e);
     return [];
