@@ -1,6 +1,6 @@
 {
   "name": "Virtual AI Agency Office",
-  "description": "A highly detailed, interactive virtual office where AI agents work at their desks. Interact with Sales, Support, and Analysis agents in a professional environment.",
+  "description": "A professional, architecturally-rendered virtual office using isometric SVG. Features interactive agents with action menus, detailed furniture with info panels, dynamic lighting, and real-time movement simulations.",
   "requestFramePermissions": [
     "microphone"
   ]

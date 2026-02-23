@@ -1,7 +1,8 @@
 
-export type AgentRole = 'CEO' | 'THINKER' | 'RESEARCH' | 'DATA' | 'DEV' | 'MONITOR' | 'UX' | 'WRITER' | 'FINANCE' | 'ADMIN';
+export type AgentRole = 'CEO' | 'THINKER' | 'RESEARCH' | 'DATA' | 'DEV' | 'MONITOR' | 'UI/UX' | 'WRITER' | 'ANALYST' | 'ORGANIZER' | 'UX' | 'FINANCE' | 'ADMIN';
 export type OfficeRoom = 'CEO_OFFICE' | 'WORKING_AREA' | 'WAR_ROOM' | 'LOUNGE';
 export type AgentStatus = 'WORKING' | 'THINKING' | 'ALERT' | 'IDLE';
+export type AgentMood = 'FOCUSED' | 'SOCIAL' | 'STRESSED';
 
 export interface Position {
   x: number;
@@ -12,10 +13,11 @@ export interface Task {
   id: string;
   title: string;
   assigneeId: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'STUCK' | 'DONE';
+  status: 'TODO' | 'IN_PROGRESS' | 'STUCK' | 'DONE';
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   dueDate: string;
   tags?: string[];
+  dependencies?: string[];
 }
 
 export interface Goal {
@@ -62,9 +64,9 @@ export interface CronJob {
 export interface LogEntry {
   id: string;
   timestamp: number;
-  level: 'INFO' | 'WARN' | 'ERROR' | 'SYSTEM';
-  source: string;
+  agentId: string;
   message: string;
+  type: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
 }
 
 export interface Agent {
@@ -73,6 +75,7 @@ export interface Agent {
   role: AgentRole;
   room: OfficeRoom;
   status: AgentStatus;
+  mood: AgentMood;
   avatar: string;
   description: string;
   systemPrompt: string;
@@ -94,6 +97,42 @@ export interface ChatMessage {
   role: 'user' | 'model';
 }
 
+export interface Proposal {
+  id: string;
+  title: string;
+  proposer: string;
+  date: string;
+  description: string;
+  impact: 'Critical' | 'High' | 'Medium' | 'Low';
+  effort: 'High' | 'Medium' | 'Low';
+  agents: string[];
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface ResearchEntry {
+  id: string;
+  title: string;
+  summary: string;
+  agentId: string;
+  timestamp: number;
+  sources: { title: string; url: string }[];
+  category: 'Market' | 'Tech' | 'Competitor' | 'Internal';
+  importance: number; // 1-10
+  tags: string[];
+}
+
+export interface SecurityIssue {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
+  status: 'OPEN' | 'INVESTIGATING' | 'PATCHED' | 'IGNORED';
+  detectedBy: string;
+  timestamp: number;
+  category: 'Prompt Injection' | 'Data Leak' | 'Auth Bypass' | 'System Breach';
+  remediation?: string;
+}
+
 export interface OfficeState {
   agents: Agent[];
   messages: ChatMessage[];
@@ -104,6 +143,9 @@ export interface OfficeState {
   cronJobs: CronJob[];
   artifacts: Artifact[];
   internalMessages: InternalMessage[];
+  proposals: Proposal[];
+  research: ResearchEntry[];
+  securityIssues: SecurityIssue[];
   selectedAgentId: string | null;
-  activeTab: 'Dashboard' | 'Tasks' | 'OrgTree' | 'Memory' | 'Artifacts' | 'Cron' | 'Physical' | 'Logs';
+  activeTab: 'Dashboard' | 'Tasks' | 'OrgTree' | 'Memory' | 'Artifacts' | 'Cron' | 'Physical' | 'Logs' | 'Capabilities' | 'Models' | 'Approvals' | 'SystemHealth' | 'Research' | 'Security';
 }
