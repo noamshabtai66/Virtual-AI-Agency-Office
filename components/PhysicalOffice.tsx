@@ -752,6 +752,40 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
          ))}
       </div>
 
+      {/* MOBILE BUTTONS */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 flex gap-2 z-40">
+        <button 
+          onClick={() => setShowMap(!showMap)}
+          className="flex-1 py-3 bg-zinc-800 text-white rounded-xl font-bold shadow-lg"
+        >
+          {showMap ? "📋 Hide Map" : "🗺️ Show Map"}
+        </button>
+        <button 
+          onClick={() => setMobileRoomMenu(!mobileRoomMenu)}
+          className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg"
+        >
+          🏠 Rooms
+        </button>
+      </div>
+
+      {/* MOBILE ROOM MENU */}
+      {mobileRoomMenu && (
+        <div className="md:hidden fixed inset-0 z-50 bg-black/90 flex items-end justify-center pb-8">
+          <div className="bg-zinc-900 p-4 rounded-t-3xl w-full max-w-sm">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-white font-bold">Select Room</span>
+              <button onClick={() => setMobileRoomMenu(false)} className="text-zinc-400">✕</button>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => {handleRoomFocus(null); setMobileRoomMenu(false);}} className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold">Global View</button>
+              {ROOMS.map(room => (
+                <button key={room.id} onClick={() => {handleRoomFocus(room.id); setMobileRoomMenu(false);}} className="w-full py-3 bg-white/10 text-white rounded-xl font-bold">{room.name}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ROOM HUD OVERLAY */}
       {focusedRoomId && (
         <div className="absolute top-8 right-4 md:right-8 z-50 pointer-events-none animate-in fade-in slide-in-from-right-4 duration-700">
