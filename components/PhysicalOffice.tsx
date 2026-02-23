@@ -51,9 +51,9 @@ const getWallTopPath = (x: number, y: number, height: number) => {
 
 
 export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialAgents, selectedAgentId, onSelectAgent }) => {
-  const [zoom, setZoom] = useState(0.6);
+  const [zoom, setZoom] = useState(0.35);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [viewBox, setViewBox] = useState({ x: -4000, y: -3000, w: 8000, h: 6000 });
+  const [viewBox, setViewBox] = useState({ x: -2500, y: -2000, w: 5000, h: 4000 });
   const [localAgents, setLocalAgents] = useState(initialAgents || []);
   const [selectedFurnitureId, setSelectedFurnitureId] = useState<string | null>(null);
   const [activeMenuAgentId, setActiveMenuAgentId] = useState<string | null>(null);
@@ -703,13 +703,13 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
       onMouseLeave={handleMouseUp}
     >
       {/* TOP HUD INFO */}
-      <div className="absolute top-8 left-8 z-50 flex items-center gap-6 pointer-events-none">
+      <div className="absolute top-4 left-4 z-50 flex items-center gap-2 pointer-events-none">
         <div className="flex flex-col">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
             <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.4em]">Operational HQ</span>
           </div>
-          <h1 className="text-white text-4xl font-light tracking-tighter">
+          <h1 className="text-white text-2xl font-light tracking-tighter">
             Physical<span className="text-blue-500">.</span>
           </h1>
         </div>
@@ -749,7 +749,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
       {/* ROOM HUD OVERLAY */}
       {focusedRoomId && (
         <div className="absolute top-8 right-8 z-50 pointer-events-none animate-in fade-in slide-in-from-right-8 duration-700">
-          <div className="bg-black/60 backdrop-blur-2xl border border-white/5 p-6 rounded-2xl flex flex-col gap-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] min-w-[320px] relative overflow-hidden">
+          <div className="bg-black/60 backdrop-blur-2xl border border-white/5 p-6 rounded-2xl flex flex-col gap-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] min-w-[320px] relative overflow-hidden">
             {/* Decorative tech lines */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-blue-500/20 to-transparent"></div>
@@ -772,7 +772,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
             
             <div className="h-[1px] w-full bg-gradient-to-r from-white/10 via-white/5 to-transparent"></div>
             
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Personnel</span>
                 <div className="flex items-baseline gap-2">
