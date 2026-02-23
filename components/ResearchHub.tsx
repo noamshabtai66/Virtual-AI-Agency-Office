@@ -13,10 +13,11 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ research, agents }) =>
   const [filter, setFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredResearch = research.filter(entry => {
-    const matchesFilter = filter === 'All' || entry.category === filter;
-    const matchesSearch = ((entry.title || "").toLowerCase()).includes(searchQuery.toLowerCase()) || 
-                          ((entry.summary || "").toLowerCase()).includes(searchQuery.toLowerCase());
+  const filteredResearch = (research || []).filter(entry => {
+    if (!entry) return false;
+    const matchesFilter = filter === 'All' || (entry.category || 'Internal') === filter;
+    const searchText = ((entry.title || "") + (entry.summary || "")).toLowerCase();
+    const matchesSearch = searchText.includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -74,7 +75,7 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ research, agents }) =>
       <div className="grid grid-cols-1 gap-6">
         <AnimatePresence mode="popLayout">
           {filteredResearch.map((entry, idx) => {
-            const agent = agents.find(a => a.id === entry.agentId);
+            const agent = agents?.find(a => a.id === entry.agentId);
             return (
               <motion.div
                 layout
@@ -120,7 +121,7 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ research, agents }) =>
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {entry.tags.map(tag => (
+                        {(entry.tags || []).map(tag => (
                           <span key={tag} className="text-[8px] bg-white/5 px-2 py-0.5 rounded text-zinc-500 uppercase font-bold">#{tag}</span>
                         ))}
                       </div>
@@ -141,7 +142,7 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ research, agents }) =>
                       <div className="flex-1">
                         <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-3 block">Verified Sources</span>
                         <div className="flex flex-wrap gap-3">
-                          {entry.sources.map((source, sIdx) => (
+                          {(entry.sources || []).map((source, sIdx) => (
                             <a 
                               key={sIdx}
                               href={source.url} 
