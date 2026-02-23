@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PhysicalOffice } from './components/PhysicalOffice';
 import { Agent, ChatMessage, OfficeState, Task, Memory, LogEntry, CronJob, Artifact, Goal, Position, InternalMessage, AgentMood } from './types';
-import { INITIAL_AGENTS, INITIAL_CRON_JOBS, INITIAL_GOALS, ROOMS, INITIAL_RESEARCH, INITIAL_SECURITY_ISSUES } from './constants';
+import { ROOMS } from './constants';
 import Character from './components/Character';
 import Desk from './components/Desk';
 import OfficeLog from './components/OfficeLog';
@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, createOfficeTask, subscribeToTasks } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchOfficeMemories, fetchOfficeLogs, createOfficeTask, subscribeToTasks } from './services/opiDataService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
   LayoutDashboard, 
@@ -49,32 +49,20 @@ const OpenClawLogo = () => (
 );
 
 const App: React.FC = () => {
+  // Initialize with EMPTY state - fetch from Supabase on mount
   const [state, setState] = useState<OfficeState>({
-    agents: INITIAL_AGENTS.map(agent => ({ ...agent, mood: 'FOCUSED' })),
+    agents: [],
     messages: [],
-    tasks: [
-      { id: 't1', title: 'Global Memory Consolidation', assigneeId: '2', status: 'IN_PROGRESS', priority: 'HIGH', dueDate: '2024-12-30', tags: ['Backend', 'Core'] },
-      { id: 't2', title: 'Refactor UI State Machine', assigneeId: '5', status: 'TODO', priority: 'MEDIUM', dueDate: '2024-12-28', tags: ['Frontend'], dependencies: ['t1'] },
-      { id: 't3', title: 'Legal Audit of Prompt Injections', assigneeId: '1', status: 'STUCK', priority: 'HIGH', dueDate: '2024-12-25', tags: ['Security'] }
-    ],
-    goals: INITIAL_GOALS,
-    memories: [
-      { id: 'm1', agentId: '2', content: 'Manager prefers high-density data visualizations.', importance: 5, timestamp: Date.now() - 5000000 },
-      { id: 'm2', agentId: '5', content: 'Tailwind config updated for 2.5K resolution support.', importance: 3, timestamp: Date.now() - 2000000 }
-    ],
-    logs: [{ id: 'l1', timestamp: Date.now(), level: 'SYSTEM', source: 'KERNEL', message: 'Nexus OS Kernel V5.0 Booted Successfully.' }],
-    cronJobs: INITIAL_CRON_JOBS,
-    artifacts: [
-      { id: 'a1', title: 'Strategic_Roadmap_Q1.pdf', type: 'DOCUMENT', creatorId: '1', timestamp: Date.now() - 86400000, content: 'Focus on scaling agent autonomy and multi-agent coordination.' }
-    ],
+    tasks: [],
+    goals: [],
+    memories: [],
+    logs: [],
+    cronJobs: [],
+    artifacts: [],
     internalMessages: [],
-    proposals: [
-      { id: 'prop-1', title: 'Implement Redis Caching Layer', proposer: 'THINKER', date: '2 hours ago', description: 'Analysis of recent API logs indicates a 40% increase in latency during peak hours. Implementing a Redis caching layer for the user-session service will reduce database load by an estimated 65% and improve response times by 200ms.', impact: 'High', effort: 'Medium', agents: ['DEV_LEAD', 'QA_TESTER'], status: 'pending' },
-      { id: 'prop-2', title: 'Automated Competitor Analysis Report', proposer: 'RESEARCHER', date: '5 hours ago', description: 'Proposing a weekly automated cron job to scrape top 3 competitors\' pricing pages and summarize changes using Gemini 3.1 Pro. This will keep the marketing team updated without manual effort.', impact: 'Medium', effort: 'Low', agents: ['DATA_ANALYST', 'RESEARCHER'], status: 'pending' },
-      { id: 'prop-3', title: 'Refactor Auth Module to OAuth2.0', proposer: 'DEV_LEAD', date: '1 day ago', description: 'Current JWT implementation has security vulnerabilities regarding token revocation. Refactoring to a standard OAuth2.0 flow with short-lived access tokens and refresh tokens is highly recommended.', impact: 'Critical', effort: 'High', agents: ['DEV_LEAD', 'QA_TESTER', 'MANAGER'], status: 'pending' },
-    ],
-    research: INITIAL_RESEARCH,
-    securityIssues: INITIAL_SECURITY_ISSUES,
+    proposals: [],
+    research: [],
+    securityIssues: [],
     selectedAgentId: null,
     activeTab: 'Dashboard',
   });
@@ -227,10 +215,12 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals] = await Promise.all([
+        const [agents, tasks, goals, memories, logs] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
+          fetchOfficeMemories(),
+          fetchOfficeLogs(),
         ]);
 
         setState(prev => ({
@@ -238,6 +228,8 @@ const App: React.FC = () => {
           agents: agents.length > 0 ? agents : prev.agents,
           tasks: tasks.length > 0 ? tasks : prev.tasks,
           goals: goals.length > 0 ? goals : prev.goals,
+          memories: memories.length > 0 ? memories : prev.memories,
+          logs: logs.length > 0 ? logs : prev.logs,
         }));
 
       } catch (error) {

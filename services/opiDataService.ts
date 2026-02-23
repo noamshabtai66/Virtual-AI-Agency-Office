@@ -43,6 +43,34 @@ export interface OfficeGoal {
   created_at?: string;
 }
 
+export interface OfficeMemory {
+  id: string;
+  agentId: string;
+  content: string;
+  importance: number;
+  timestamp: number;
+}
+
+export interface OfficeProposal {
+  id: string;
+  title: string;
+  proposer: string;
+  date: string;
+  description: string;
+  impact: string;
+  effort: string;
+  agents: string[];
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface OfficeLog {
+  id: string;
+  timestamp: number;
+  agentId: string;
+  message: string;
+  type: 'INFO' | 'WARNING' | 'ERROR' | 'SUCCESS';
+}
+
 // OPI Schema Types (from our Supabase)
 interface OPIAgent {
   id: number;
@@ -57,8 +85,6 @@ interface OPIAgent {
   trust_score?: number;
   expertise?: string[];
   created_at: string;
-  last_active?: string;
-  current_task_id?: string;
 }
 
 interface OPITask {
@@ -71,9 +97,7 @@ interface OPITask {
   deadline?: string;
   description?: string;
   tags?: string[];
-  progress?: number;
   created_at: string;
-  updated_at: string;
 }
 
 interface OPIGoal {
@@ -84,7 +108,26 @@ interface OPIGoal {
   created_at: string;
 }
 
-// Mapping Functions: OPI Schema -> Office Types
+interface OPINote {
+  id: number;
+  title: string;
+  content: string;
+  category?: string;
+  source_type?: string;
+  tags?: string[];
+  created_at: string;
+}
+
+interface OPIActivityLog {
+  id: number;
+  level: string;
+  source: string;
+  message: string;
+  details?: any;
+  created_at: string;
+}
+
+// Mapping Functions
 function mapOPIAgentToOffice(opiAgent: OPIAgent): OfficeAgent {
   return {
     id: String(opiAgent.id),
@@ -92,7 +135,7 @@ function mapOPIAgentToOffice(opiAgent: OPIAgent): OfficeAgent {
     role: opiAgent.role,
     room: opiAgent.room || 'WORKING_AREA',
     status: opiAgent.status || 'IDLE',
-    mood: 'FOCUSED', // Default mood
+    mood: 'FOCUSED',
     avatar: opiAgent.avatar || `https://api.dicebear.com/9.x/avataaars/svg?seed=${opiAgent.name}`,
     description: opiAgent.description,
     systemPrompt: opiAgent.system_prompt,
@@ -134,7 +177,7 @@ function mapOPIGoalToOffice(opiGoal: OPIGoal): OfficeGoal {
   return {
     id: String(opiGoal.id),
     title: opiGoal.title,
-    progress: 0, // Default - OPI goals don't have progress
+    progress: 0,
     category: (opiGoal.status as OfficeGoal['category']) || 'PRODUCT',
     description: opiGoal.description,
     status: opiGoal.status,
@@ -142,32 +185,95 @@ function mapOPIGoalToOffice(opiGoal: OPIGoal): OfficeGoal {
   };
 }
 
-// Fetch Functions
+function mapOPINoteToMemory(opiNote: OPINote): OfficeMemory {
+  return {
+    id: String(opiNote.id),
+    agentId: '1',
+    content: opiNote.content || opiNote.title,
+    importance: 3,
+    timestamp: new Date(opiNote.created_at).getTime(),
+  };
+}
+
+function mapOPIActivityToLog(opiLog: OPIActivityLog): OfficeLog {
+  return {
+    id: String(opiLog.id),
+    timestamp: new Date(opiLog.created_at).getTime(),
+    agentId: opiLog.source,
+    message: opiLog.message,
+    type: (opiLog.level as OfficeLog['type']) || 'INFO',
+  };
+}
+
+// Fetch Functions - Returns EMPTY arrays if fetch fails (no hardcoded data!)
 export async function fetchOfficeAgents(): Promise<OfficeAgent[]> {
-  const { data, error } = await supabase.from('agents').select('*');
-  if (error) {
-    console.error('Error fetching agents:', error);
+  try {
+    const { data, error } = await supabase.from('agents').select('*');
+    if (error) {
+      console.error('Error fetching agents:', error);
+      return [];
+    }
+    return (data as OPIAgent[]).map(mapOPIAgentToOffice);
+  } catch (e) {
+    console.error('Exception fetching agents:', e);
     return [];
   }
-  return (data as OPIAgent[]).map(mapOPIAgentToOffice);
 }
 
 export async function fetchOfficeTasks(): Promise<OfficeTask[]> {
-  const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false });
-  if (error) {
-    console.error('Error fetching tasks:', error);
+  try {
+    const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+      console.error('Error fetching tasks:', error);
+      return [];
+    }
+    return (data as OPITask[]).map(mapOPITaskToOffice);
+  } catch (e) {
+    console.error('Exception fetching tasks:', e);
     return [];
   }
-  return (data as OPITask[]).map(mapOPITaskToOffice);
 }
 
 export async function fetchOfficeGoals(): Promise<OfficeGoal[]> {
-  const { data, error } = await supabase.from('goals').select('*').order('created_at', { ascending: false });
-  if (error) {
-    console.error('Error fetching goals:', error);
+  try {
+    const { data, error } = await supabase.from('goals').select('*').order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching goals:', error);
+      return [];
+    }
+    return (data as OPIGoal[]).map(mapOPIGoalToOffice);
+  } catch (e) {
+    console.error('Exception fetching goals:', e);
     return [];
   }
-  return (data as OPIGoal[]).map(mapOPIGoalToOffice);
+}
+
+export async function fetchOfficeMemories(): Promise<OfficeMemory[]> {
+  try {
+    const { data, error } = await supabase.from('notes').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+      console.error('Error fetching memories:', error);
+      return [];
+    }
+    return (data as OPINote[]).map(mapOPINoteToMemory);
+  } catch (e) {
+    console.error('Exception fetching memories:', e);
+    return [];
+  }
+}
+
+export async function fetchOfficeLogs(): Promise<OfficeLog[]> {
+  try {
+    const { data, error } = await supabase.from('activity_log').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) {
+      console.error('Error fetching logs:', error);
+      return [];
+    }
+    return (data as OPIActivityLog[]).map(mapOPIActivityToLog);
+  } catch (e) {
+    console.error('Exception fetching logs:', e);
+    return [];
+  }
 }
 
 // Write Functions
