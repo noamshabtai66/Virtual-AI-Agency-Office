@@ -15,8 +15,8 @@ export const ResearchHub: React.FC<ResearchHubProps> = ({ research, agents }) =>
 
   const filteredResearch = research.filter(entry => {
     const matchesFilter = filter === 'All' || entry.category === filter;
-    const matchesSearch = entry.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          entry.summary.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = ((entry.title || "").toLowerCase()).includes(searchQuery.toLowerCase()) || 
+                          ((entry.summary || "").toLowerCase()).includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
