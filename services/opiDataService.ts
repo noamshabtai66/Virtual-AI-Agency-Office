@@ -511,3 +511,29 @@ export async function fetchSystemHealth(): Promise<any> {
     return { status: 'UNKNOWN', uptime: '99.9%', responseTime: 'N/A' };
   }
 }
+
+// Cost estimation based on activity
+export async function fetchDailyCost(): Promise<{ total: string; breakdown: { model: string; cost: string }[] }> {
+  try {
+    const { data: logs } = await supabase
+      .from('activity_log')
+      .select('created_at, source')
+      .gte('created_at', new Date().toISOString().split('T')[0]);
+    
+    const logCount = logs?.length || 0;
+    
+    // Rough estimation: each operation costs ~$0.01-0.05
+    // This is a placeholder - real implementation would track actual API usage
+    const estimatedCost = (logCount * 0.02).toFixed(2);
+    
+    return {
+      total: `$${estimatedCost}`,
+      breakdown: [
+        { model: 'API Operations', cost: `$${(logCount * 0.015).toFixed(2)}` },
+        { model: 'System Overhead', cost: `$${(logCount * 0.005).toFixed(2)}` },
+      ]
+    };
+  } catch (e) {
+    return { total: '$0.00', breakdown: [] };
+  }
+}

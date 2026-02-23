@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchDailyCost, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
 import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
@@ -55,6 +55,7 @@ const App: React.FC = () => {
     agents: [],
     messages: [],
     tasks: [],
+    dailyCost: { total: "$'0.00", breakdown: [] },
     goals: [],
     memories: [],
     logs: [],
@@ -216,12 +217,13 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, proposals, capabilities, models, systemHealth] = await Promise.all([
+        const [agents, tasks, goals, memories, dailyCost, logs, research, securityIssues, artifacts, proposals, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
           fetchOfficeMemories(),
           fetchOfficeLogs(),
+          fetchDailyCost(),
           fetchAllResearch(),
           fetchSecurityIssues(),
           fetchArtifacts(),
@@ -242,6 +244,7 @@ const App: React.FC = () => {
           securityIssues: securityIssues,
           artifacts: artifacts,
           proposals: proposals,
+          dailyCost: dailyCost || { total: "$0.00", breakdown: [] },
           systemHealth: systemHealth || { status: "UNKNOWN", uptime: "0", responseTime: "0", errorRate: "0", activeTasks: 0 },
           cronJobs: [],
         }));
@@ -747,7 +750,7 @@ const App: React.FC = () => {
                           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Daily Spend</div>
                           <div className="w-2 h-2 rounded-full bg-green-500"></div>
                        </div>
-                       <div className="text-3xl font-black text-white mb-1">$14.20</div>
+                       <div className="text-3xl font-black text-white mb-1">{state.dailyCost.total}</div>
                        <div className="text-[10px] text-zinc-600">28% of daily budget</div>
                     </button>
 
@@ -1220,7 +1223,7 @@ const App: React.FC = () => {
                      <h2 className="text-white text-3xl font-bold">Models Fleet Monitor</h2>
                      <div className="flex gap-4">
                         <div className="px-4 py-2 bg-white/5 rounded-lg text-[10px] font-bold text-zinc-400 uppercase border border-white/5">
-                           Total Cost Today: <span className="text-green-400 ml-1">$14.20</span>
+                           Total Cost Today: <span className="text-green-400 ml-1">{state.dailyCost.total}</span>
                         </div>
                      </div>
                   </div>
