@@ -272,29 +272,6 @@ const App: React.FC = () => {
       supabase.removeChannel(channel);
     };
   }, []);
-              const normalized = normalizeData([payload.new], 'task')[0];
-              return { ...prev, tasks: [...tasks, normalized] };
-            }
-            if (payload.eventType === 'UPDATE') {
-              const index = tasks.findIndex(t => t.id === payload.old.id);
-              if (index !== -1) {
-                tasks[index] = normalizeData([payload.new], 'task')[0];
-              }
-              return { ...prev, tasks };
-            }
-            if (payload.eventType === 'DELETE') {
-              return { ...prev, tasks: tasks.filter(t => t.id !== payload.old.id) };
-            }
-            return prev;
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
 
   // Real-time subscriptions for Agents
   useEffect(() => {
