@@ -701,6 +701,9 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onTouchStart={handleMouseDown}
+      onTouchMove={handleMouseMove}
+      onTouchEnd={handleMouseUp}
     >
       {/* TOP HUD INFO */}
       <div className="absolute top-4 left-4 z-50 flex items-center gap-2 pointer-events-none">
@@ -713,7 +716,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
             Physical<span className="text-blue-500">.</span>
           </h1>
         </div>
-        <div className="h-12 w-[1px] bg-white/10 mx-2"></div>
+        <div className="h-6 md:h-12 w-[1px] bg-white/10 mx-2"></div>
         <div className="flex flex-col gap-1">
           <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest">System Latency</span>
           <div className="flex items-center gap-2">
@@ -726,10 +729,10 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
           </div>
         </div>
       </div>
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-3 z-50 bg-zinc-900/40 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-8 duration-700">
+      <div className="absolute bottom-4 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-1 md:gap-3 z-50 overflow-x-auto max-w-[95vw] scrollbar-hide bg-zinc-900/40 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-8 duration-700">
          <button 
             onClick={() => handleRoomFocus(null)}
-            className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${!focusedRoomId ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+            className={`px-2 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${!focusedRoomId ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
          >
             <Building2 size={14} />
             מבט גלובלי
@@ -739,7 +742,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
             <button 
                key={room.id}
                onClick={() => handleRoomFocus(room.id)}
-               className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${focusedRoomId === room.id ? 'bg-zinc-100 text-black shadow-xl scale-105' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+               className={`px-2 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${focusedRoomId === room.id ? 'bg-zinc-100 text-black shadow-xl scale-105' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
             >
                {room.name}
             </button>
@@ -748,7 +751,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
 
       {/* ROOM HUD OVERLAY */}
       {focusedRoomId && (
-        <div className="absolute top-8 right-8 z-50 pointer-events-none animate-in fade-in slide-in-from-right-8 duration-700">
+        <div className="absolute top-8 right-4 md:right-8 z-50 pointer-events-none animate-in fade-in slide-in-from-right-4 duration-700">
           <div className="bg-black/60 backdrop-blur-2xl border border-white/5 p-6 rounded-2xl flex flex-col gap-2 shadow-[0_0_50px_rgba(0,0,0,0.8)] min-w-[320px] relative overflow-hidden">
             {/* Decorative tech lines */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
@@ -1262,7 +1265,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
       </svg>
 
       {/* TACTICAL RADAR (Mini-map) */}
-      <div className="absolute bottom-8 right-8 w-56 h-56 bg-black/40 backdrop-blur-2xl border border-white/5 rounded-2xl overflow-hidden z-50 shadow-2xl group pointer-events-auto">
+      <div className="absolute bottom-8 right-4 md:right-8 w-56 h-56 bg-black/40 backdrop-blur-2xl border border-white/5 rounded-2xl overflow-hidden z-50 shadow-2xl group pointer-events-auto">
          <div className="p-3 border-b border-white/5 flex justify-between items-center bg-zinc-950/50">
             <div className="flex items-center gap-2">
                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
@@ -1343,7 +1346,7 @@ export const PhysicalOffice: React.FC<PhysicalOfficeProps> = ({ agents: initialA
       )}
 
       {/* CONTROLS */}
-      <div className="absolute bottom-8 right-8 flex flex-col gap-2 z-50">
+      <div className="absolute bottom-8 right-4 md:right-8 flex flex-col gap-2 z-50">
          <div className="bg-zinc-900/90 backdrop-blur border border-white/10 rounded-xl p-2 flex flex-col gap-2">
             <button className="w-8 h-8 bg-zinc-800 rounded-lg text-white flex items-center justify-center hover:bg-zinc-700 transition-colors" onClick={() => setZoom(z => Math.min(2, z + 0.1))}>+</button>
             <button className="w-8 h-8 bg-zinc-800 rounded-lg text-white flex items-center justify-center hover:bg-zinc-700 transition-colors" onClick={() => setZoom(z => Math.max(0.2, z - 0.1))}>-</button>
