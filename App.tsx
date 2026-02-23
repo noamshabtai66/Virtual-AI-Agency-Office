@@ -10,7 +10,7 @@ import { ResearchHub } from './components/ResearchHub';
 import { SecurityCenter } from './components/SecurityCenter';
 import { getGeminiResponse } from './services/geminiService';
 import { supabase } from './services/supabaseService';
-import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, fetchResearch, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
+import { fetchOfficeAgents, fetchOfficeTasks, fetchOfficeGoals, fetchProposals, fetchOfficeMemories, fetchOfficeLogs, fetchCapabilities, fetchModels, fetchSystemHealth, fetchSecurityIssues, fetchArtifacts, subscribeToTasks, subscribeToAgents } from './services/opiDataService';
 import { fetchAllResearch, fetchResearchByCategory, RESEARCH_TABS } from './services/researchService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from 'recharts';
 import { 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchInitialState = async () => {
       try {
-        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, capabilities, models, systemHealth, proposals] = await Promise.all([
+        const [agents, tasks, goals, memories, logs, research, securityIssues, artifacts, proposals, capabilities, models, systemHealth] = await Promise.all([
           fetchOfficeAgents(),
           fetchOfficeTasks(),
           fetchOfficeGoals(),
@@ -242,6 +242,7 @@ const App: React.FC = () => {
           securityIssues: securityIssues,
           artifacts: artifacts,
           proposals: proposals,
+          systemHealth: systemHealth || { status: "UNKNOWN", uptime: "0", responseTime: "0", errorRate: "0", activeTasks: 0 },
           cronJobs: [],
         }));
 
